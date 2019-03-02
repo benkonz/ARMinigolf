@@ -10,7 +10,7 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.TransformationSystem;
 
-public class BallNode extends BaseTransformableNode {
+public class BallNode extends BaseTransformableNode implements Updatable {
 
 
     private VelocityTracker velocityTracker;
@@ -43,7 +43,7 @@ public class BallNode extends BaseTransformableNode {
             case MotionEvent.ACTION_MOVE: {
                 Toast.makeText(context, "You moved the ball!", Toast.LENGTH_SHORT).show();
                 velocityTracker.addMovement(motionEvent);
-                velocityTracker.computeCurrentVelocity(1000);
+                velocityTracker.computeCurrentVelocity(1);
                 Toast.makeText(context, "x velocity: " + velocityTracker.getXVelocity(pointerId) + " y velocity: " + velocityTracker.getYVelocity(pointerId),
                         Toast.LENGTH_LONG).show();
                 velocity.x = velocityTracker.getXVelocity(pointerId);
@@ -57,5 +57,12 @@ public class BallNode extends BaseTransformableNode {
                 break;
         }
         return true;
+    }
+
+    @Override
+    public void update() {
+        Vector3 position = getWorldPosition();
+        Vector3 newPosition = new Vector3(position.x + velocity.x / 100, position.y + velocity.y / 100, position.z + velocity.z / 100);
+        setWorldPosition(newPosition);
     }
 }

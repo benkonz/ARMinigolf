@@ -3,10 +3,9 @@ package com.example.pickhacks;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -18,12 +17,15 @@ import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
-import com.google.ar.sceneform.rendering.Material;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private static final double MIN_OPENGL_VERSION = 3.0;
     ArFragment arFragment;
     ModelRenderable sphere;
+    List<Updatable> physicsObjects;
 
     boolean hasSpawned = false;
 
@@ -79,7 +82,10 @@ public class MainActivity extends AppCompatActivity {
 
 
         });
-
+        physicsObjects = new ArrayList<>();
+        Runnable runnable = new PhysicsThread(physicsObjects);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService.execute(runnable);
     }
 
     public boolean spawnSphere(HitResult hitResult, ModelRenderable sph) {
@@ -91,9 +97,11 @@ public class MainActivity extends AppCompatActivity {
         s.setParent(anchorNode);
         s.setRenderable(sph);
         s.select();
+        physicsObjects.add(s);
         return true;
-
     }
+
+
 
 
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
