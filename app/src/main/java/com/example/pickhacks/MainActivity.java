@@ -3,6 +3,7 @@ package com.example.pickhacks;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
+import com.google.ar.sceneform.rendering.Material;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
@@ -29,7 +31,9 @@ public class MainActivity extends AppCompatActivity {
     private static final double MIN_OPENGL_VERSION = 3.0;
     ArFragment arFragment;
     ModelRenderable sphere;
+
     boolean hasSpawned = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,38 +46,52 @@ public class MainActivity extends AppCompatActivity {
         Toast t = Toast.makeText(this, "Looking for Plane Surface!", Toast.LENGTH_LONG);
         t.setGravity(Gravity.CENTER, 0, 0);
         t.show();
+
+
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.RED))
                 .thenAccept(
                         material -> {
                             sphere =
-                                    ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0.15f, 0.0f), material); }).exceptionally(throwable -> {
+                                    ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0.15f, 0.0f), material);
+                        }).exceptionally(throwable -> {
             Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();
             return null;
         });
 
+
         arFragment.setOnTapArPlaneListener((HitResult hitResult, Plane plane, MotionEvent motionEvent) ->
         {
-            if (sphere == null)
-            {
+            if (sphere == null) {
                 return;
             }
 
-            if (!hasSpawned)
-            {
-                Anchor anchor = hitResult.createAnchor();
-                AnchorNode anchorNode = new AnchorNode(anchor);
-                anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-                BallNode s = new BallNode(this, arFragment.getTransformationSystem());
-                s.setParent(anchorNode);
-                s.setRenderable(sphere);
-                s.select();
+            if (!hasSpawned) {
+                spawnSphere(hitResult, sphere);
+                /*ModelRenderable sphere2 = sphere.makeCopy();
+                sphere2.getMaterial().setFloat3(
+                        MaterialFactory.MATERIAL_COLOR, new Color(android.graphics.Color.BLUE));
+                spawnSphere(hitResult, sphere2);*/
                 hasSpawned = true;
-                Toast.makeText(this, "Created ball", Toast.LENGTH_LONG).show();
+
             }
+
+
         });
+
+    }
+
+    public boolean spawnSphere(HitResult hitResult, ModelRenderable sph) {
+        Anchor anchor = hitResult.createAnchor();
+        AnchorNode anchorNode = new AnchorNode(anchor);
+        anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+        BallNode s = new BallNode(this, arFragment.getTransformationSystem());
+        s.setParent(anchorNode);
+        s.setRenderable(sph);
+        s.select();
+        return true;
 
     }
 
