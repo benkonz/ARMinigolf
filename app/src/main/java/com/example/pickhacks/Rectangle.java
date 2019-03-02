@@ -10,8 +10,8 @@ public class Rectangle {
         setTopRight(topRightIn);
     }
 
-    public Rectangle(int bottomLeftXIn, int bottomLeftYIn, int bottomLeftZIn,
-                     int topRightXIn, int topRightYIn, int topRightZIn) {
+    public Rectangle(float bottomLeftXIn, float bottomLeftYIn, float bottomLeftZIn,
+                     float topRightXIn, float topRightYIn, float topRightZIn) {
         this(new Point3D(bottomLeftXIn, bottomLeftYIn, bottomLeftZIn),
                 new Point3D(topRightXIn, topRightYIn, topRightZIn));
     }

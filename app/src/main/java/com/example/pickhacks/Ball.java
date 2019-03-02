@@ -18,11 +18,11 @@ public class Ball {
         this(new Point3D(0, 0, 0), radiusIn);
     }
 
-    public Ball(int xIn, int yIn, int zIn) {
+    public Ball(float xIn, float yIn, float zIn) {
         this(new Point3D(xIn, yIn, zIn), 0);
     }
 
-    public Ball(int xIn, int yIn, int zIn, int radiusIn) {
+    public Ball(float xIn, float yIn, float zIn, int radiusIn) {
         this(new Point3D(xIn, yIn, zIn), radiusIn);
     }
 
@@ -35,15 +35,15 @@ public class Ball {
         return point3D;
     }
 
-    public int getX() {
+    public float getX() {
         return point3D.x;
     }
 
-    public int getY() {
+    public float getY() {
         return point3D.y;
     }
 
-    public int getZ() {
+    public float getZ() {
         return point3D.z;
     }
 
@@ -55,15 +55,15 @@ public class Ball {
         point3D = point3DIn;
     }
 
-    public void setX(int xIn) {
+    public void setX(float xIn) {
         point3D.x = xIn;
     }
 
-    public void setY(int yIn) {
+    public void setY(float yIn) {
         point3D.y = yIn;
     }
 
-    public void setZ(int zIn) {
+    public void setZ(float zIn) {
         point3D.z = zIn;
     }
 
@@ -85,9 +85,9 @@ public class Ball {
     }
 
     public static Point3D normalize(Point3D point3D) {
-        int magnitude = (int) Math.sqrt((double) (point3D.x * point3D.x) +
-                (double) (point3D.y * point3D.y) +
-                (double) (point3D.z * point3D.z)
+        float magnitude = (float) Math.sqrt((point3D.x * point3D.x) +
+                (point3D.y * point3D.y) +
+                (point3D.z * point3D.z)
         );
         return new Point3D(
                 point3D.x / magnitude,
@@ -96,7 +96,7 @@ public class Ball {
         );
     }
 
-    public static int dot(Point3D point3D1, Point3D point3D2) {
+    public static float dot(Point3D point3D1, Point3D point3D2) {
         return point3D1.x * point3D2.x +
                 point3D1.y * point3D2.y +
                 point3D1.z * point3D2.z;
@@ -110,7 +110,7 @@ public class Ball {
         );
     }
 
-    public static Point3D scale(int factor, Point3D point3D) {
+    public static Point3D scale(float factor, Point3D point3D) {
         return new Point3D(
                 point3D.x * factor,
                 point3D.y * factor,
@@ -138,6 +138,6 @@ public class Ball {
         return Math.sqrt((getX() - other.getX()) * (getX() - other.getX()) +
                 (getY() - other.getY()) * (getY() - other.getY()) +
                 getZ() - other.getZ()) * (getZ() - other.getZ())
-                < (double) (getRadius() + other.getRadius());
+                < getRadius() + other.getRadius();
     }
 }
