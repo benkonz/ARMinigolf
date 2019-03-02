@@ -44,10 +44,9 @@ public class BallNode extends BaseTransformableNode implements Updatable {
                 Toast.makeText(context, "You moved the ball!", Toast.LENGTH_SHORT).show();
                 velocityTracker.addMovement(motionEvent);
                 velocityTracker.computeCurrentVelocity(1);
-                Toast.makeText(context, "x velocity: " + velocityTracker.getXVelocity(pointerId) + " y velocity: " + velocityTracker.getYVelocity(pointerId),
-                        Toast.LENGTH_LONG).show();
-                velocity.x = velocityTracker.getXVelocity(pointerId);
-                velocity.y = velocityTracker.getYVelocity(pointerId);
+                velocity.x = velocityTracker.getXVelocity(pointerId) / 1000;
+                velocity.y = velocityTracker.getYVelocity(pointerId) / 1000;
+                Toast.makeText(context, "x: " + velocity.x + " y: " + velocity.y, Toast.LENGTH_SHORT).show();
                 break;
             }
             case MotionEvent.ACTION_UP:
@@ -62,7 +61,9 @@ public class BallNode extends BaseTransformableNode implements Updatable {
     @Override
     public void update() {
         Vector3 position = getWorldPosition();
-        Vector3 newPosition = new Vector3(position.x + velocity.x / 100, position.y + velocity.y / 100, position.z + velocity.z / 100);
+        Vector3 newPosition = new Vector3(position.x + velocity.x, position.y, position.z + velocity.y);
+        velocity.x *= .99;
+        velocity.y *= .99;
         setWorldPosition(newPosition);
     }
 }
