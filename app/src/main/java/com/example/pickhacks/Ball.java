@@ -51,7 +51,9 @@ public class Ball {
     }
 
     public boolean CollisonBall(Ball other) {
-        return false;
+        return Math.sqrt((getX() - other.getX()) * (getX() - other.getX()) +
+                         (getY() - other.getY()) * (getY() - other.getY()) +
+                          getZ() - other.getZ()) * (getZ() - other.getZ())
+                < (double)(getRadius() + other.getRadius());
     }
-
 }
