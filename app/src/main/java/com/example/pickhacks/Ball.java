@@ -42,7 +42,7 @@ public class Ball {
     public void setZ(int zIn) { point3D.z = zIn; }
     public void setRadius(int radiusIn) { radius = radiusIn; }
 
-    public boolean CollisonRectangle() {
+    public boolean CollisonRectangle(Rectangle rectangle) {
         return false;
     }
 
@@ -50,7 +50,7 @@ public class Ball {
         return false;
     }
 
-    public boolean CollisonBall() {
+    public boolean CollisonBall(Ball other) {
         return false;
     }
 
