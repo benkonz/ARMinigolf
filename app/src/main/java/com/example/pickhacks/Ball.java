@@ -72,7 +72,12 @@ public class Ball {
     }
 
     public boolean CollisonRectangle(Rectangle rectangle) {
-        return false;
+        return CollisonBall(
+                new Ball(
+                        Math.max(rectangle.getBottomLeft().x, Math.min(getX(), rectangle.getTopRight().x)),
+                        Math.max(rectangle.getBottomLeft().y, Math.min(getY(), rectangle.getTopRight().y)),
+                        Math.max(rectangle.getBottomLeft().z, Math.min(getZ(), rectangle.getTopRight().z)),
+                        0));
     }
 
     public boolean CollisonCylindar() {
