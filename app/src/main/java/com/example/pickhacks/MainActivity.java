@@ -39,7 +39,9 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
-
+        Toast t = Toast.makeText(this, "Looking for Plane Surface!", Toast.LENGTH_LONG);
+        t.setGravity(Gravity.CENTER, 0, 0);
+        t.show();
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.RED))
                 .thenAccept(
                         material -> {
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 s.select();
                 hasSpawned = true;
             }
+
 
         });
 
