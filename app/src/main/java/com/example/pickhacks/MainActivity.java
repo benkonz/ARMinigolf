@@ -66,14 +66,13 @@ public class MainActivity extends AppCompatActivity {
                 AnchorNode anchorNode = new AnchorNode(anchor);
                 anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-                TransformableNode s = new TransformableNode(arFragment.getTransformationSystem());
+                BallNode s = new BallNode(this, arFragment.getTransformationSystem());
                 s.setParent(anchorNode);
                 s.setRenderable(sphere);
                 s.select();
                 hasSpawned = true;
+                Toast.makeText(this, "Created ball", Toast.LENGTH_LONG).show();
             }
-
-
         });
 
     }
