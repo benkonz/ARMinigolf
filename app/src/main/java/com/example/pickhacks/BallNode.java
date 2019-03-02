@@ -1,28 +1,31 @@
 package com.example.pickhacks;
 
-import android.util.Log;
+import android.content.Context;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
+import android.widget.Toast;
 
 import com.google.ar.sceneform.HitTestResult;
-import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.ux.BaseTransformableNode;
+import com.google.ar.sceneform.ux.TransformationSystem;
 
-public class BallNode extends Node implements Node.OnTouchListener {
+public class BallNode extends BaseTransformableNode implements Updatable {
+
 
     private VelocityTracker velocityTracker;
-    private Ball ball;
+    private Context context;
+    private Vector3 velocity;
 
-    public BallNode(Ball ball) {
+    public BallNode(Context context, TransformationSystem transformationSystem) {
+        super(transformationSystem);
         velocityTracker = null;
-        this.ball = ball;
-    }
-
-    public Ball getBall() {
-        return ball;
+        this.context = context;
+        velocity = new Vector3(0, 0, 0);
     }
 
     @Override
-    public boolean onTouch(HitTestResult hitTestResult, MotionEvent motionEvent) {
+    public boolean onTouchEvent(HitTestResult hitTestResult, MotionEvent motionEvent) {
         int index = motionEvent.getActionIndex();
         int action = motionEvent.getActionMasked();
         int pointerId = motionEvent.getPointerId(index);
@@ -38,17 +41,29 @@ public class BallNode extends Node implements Node.OnTouchListener {
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
+                Toast.makeText(context, "You moved the ball!", Toast.LENGTH_SHORT).show();
                 velocityTracker.addMovement(motionEvent);
-                velocityTracker.computeCurrentVelocity(1000);
-                Log.d("", "X Velocity: " + velocityTracker.getXVelocity(pointerId));
-                Log.d("", "Y Velocity: " + velocityTracker.getYVelocity(pointerId));
+                velocityTracker.computeCurrentVelocity(1);
+                velocity.x = velocityTracker.getXVelocity(pointerId) / 1000;
+                velocity.y = velocityTracker.getYVelocity(pointerId) / 1000;
+                Toast.makeText(context, "x: " + velocity.x + " y: " + velocity.y, Toast.LENGTH_SHORT).show();
                 break;
             }
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 velocityTracker.recycle();
+                velocityTracker = null;
                 break;
         }
         return true;
+    }
+
+    @Override
+    public void update() {
+        Vector3 position = getWorldPosition();
+        Vector3 newPosition = new Vector3(position.x + velocity.x, position.y, position.z + velocity.y);
+        velocity.x *= .99;
+        velocity.y *= .99;
+        setWorldPosition(newPosition);
     }
 }

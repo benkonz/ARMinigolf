@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -23,7 +23,13 @@ import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     ModelRenderable wall;
     Box[] map;
     boolean hasSpawnedBall = false;
+    List<Updatable> physicsObjects;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
+        Toast t = Toast.makeText(this, "Looking for Plane Surface!", Toast.LENGTH_LONG);
+        t.setGravity(Gravity.CENTER, 0, 0);
+        t.show();
+        physicsObjects = new ArrayList<>();
+
 
         map = new Box[61];
         for (int i = 0; i < 30; i++) {
@@ -54,66 +66,59 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 30; i < 60; i++) {
             map[i] = new Box();
             map[i].setSize(new Vector3(0.2f, 0.15f, 0.2f));
-            map[i].setCenter(new Vector3(0.4f, 0.0f, -0.04f * (i % (map.length/2))));
+            map[i].setCenter(new Vector3(0.4f, 0.0f, -0.04f * (i % (map.length / 2))));
         }
         map[60] = new Box();
         map[60].setSize(new Vector3(1f, 0.15f, 0.2f));
         map[60].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
 
 
-
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.WHITE))
                 .thenAccept(
                         material -> {
                             sphere =
-                                    ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0f, 0.0f), material); }).exceptionally(throwable -> {
-                    Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                    return null;
-                });
-
-        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.BLACK))
-                .thenAccept(
-                        material -> {
-                            wall =
-                                    ShapeFactory.makeCube(map[0].getSize(), map[0].getCenter(), material); }).exceptionally(throwable -> {
+                                    ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0f, 0.0f), material);
+                        }).exceptionally(throwable -> {
             Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();
             return null;
         });
 
-        arFragment.setOnTapArPlaneListener((HitResult hitResult, Plane plane, MotionEvent motionEvent) ->
+        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.BLACK))
+                .thenAccept(
+                        material -> {
+                            wall =
+                                    ShapeFactory.makeCube(map[0].getSize(), map[0].getCenter(), material);
+                        }).exceptionally(throwable -> {
+            Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+            return null;
+        });
 
+
+        arFragment.setOnTapArPlaneListener((HitResult hitResult, Plane plane, MotionEvent motionEvent) ->
         {
-            if (sphere == null)
-            {
+            if (sphere == null) {
                 return;
             }
-
-            if (!hasSpawnedBall)
-            {
-                Anchor anchor = hitResult.createAnchor();
-                AnchorNode anchorNode = new AnchorNode(anchor);
-                anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-                TransformableNode s = new TransformableNode(arFragment.getTransformationSystem());
-                s.setParent(anchorNode);
-                s.setRenderable(sphere);
-                s.select();
+            Log.d("TEST", "Sphere: " + sphere + "; hasSpawn: " + hasSpawnedBall);
+            if (!hasSpawnedBall) {
+                spawnSphere(hitResult, sphere);
 
                 Anchor wallAnchor = hitResult.createAnchor();
                 AnchorNode wallAnchorNode = new AnchorNode(wallAnchor);
                 wallAnchorNode.setParent(arFragment.getArSceneView().getScene());
 
-                for (int i =0; i < map.length; i++) {
+                for (int i = 0; i < map.length; i++) {
                     final int pos = i;
                     MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.BLACK))
                             .thenAccept(
                                     material -> {
                                         wall =
-                                                ShapeFactory.makeCube(map[pos].getSize(), map[pos].getCenter(), material); }).exceptionally(throwable -> {
+                                                ShapeFactory.makeCube(map[pos].getSize(), map[pos].getCenter(), material);
+                                    }).exceptionally(throwable -> {
                         Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
                         toast.setGravity(Gravity.CENTER, 0, 0);
                         toast.show();
@@ -126,24 +131,27 @@ public class MainActivity extends AppCompatActivity {
                 }
                 hasSpawnedBall = true;
             }
-            /**else {
 
-                if (wall == null)
-                {
-                    return;
-                }
-
-                Anchor wallAnchor = hitResult.createAnchor();
-                AnchorNode wallAnchorNode = new AnchorNode(wallAnchor);
-                wallAnchorNode.setParent(arFragment.getArSceneView().getScene());
-
-                Node n = new Node();
-                n.setParent(wallAnchorNode);
-                n.setRenderable(wall);
-            }*/
+            Runnable runnable = new PhysicsThread(physicsObjects);
+            ExecutorService executorService = Executors.newFixedThreadPool(1);
+            executorService.execute(runnable);
         });
-
     }
+
+    public boolean spawnSphere(HitResult hitResult, ModelRenderable sph) {
+        Anchor anchor = hitResult.createAnchor();
+        AnchorNode anchorNode = new AnchorNode(anchor);
+        anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+        BallNode s = new BallNode(this, arFragment.getTransformationSystem());
+        s.setParent(anchorNode);
+        s.setRenderable(sph);
+        s.select();
+        physicsObjects.add(s);
+        return true;
+    }
+
+
 
 
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
