@@ -16,6 +16,7 @@ public class BallNode extends BaseTransformableNode implements Updatable {
     private VelocityTracker velocityTracker;
     private Context context;
     private Vector3 velocity;
+    private float gravity;
 
     public BallNode(Context context, TransformationSystem transformationSystem) {
         super(transformationSystem);
