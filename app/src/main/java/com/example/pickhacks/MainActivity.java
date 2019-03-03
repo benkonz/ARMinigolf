@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     Sphere ball;
     ModelRenderable wall;
     ModelRenderable goal;
+    AnchorNode goalAnchorNode;
    LevelManager lm;
    Box[] level1;
    Box[] level2;
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     Renderable menuRenderable;
     boolean menued = false;
     Vector3 origin;
+    HitResult hitRes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
             if (sphere == null) {
                 return;
             }
+            hitRes = hitResult;
             if (!hasLoaded) {
                 spawnSphere(hitResult, sphere);
                 origin = ball.getCenter();
@@ -132,9 +135,8 @@ public class MainActivity extends AppCompatActivity {
                     n.setParent(wallAnchorNode);
                     n.setRenderable(wall);
                 }
-
                 Anchor goalAnchor = hitResult.createAnchor();
-                AnchorNode goalAnchorNode = new AnchorNode(goalAnchor);
+                goalAnchorNode = new AnchorNode(goalAnchor);
                 goalAnchorNode.setParent(arFragment.getArSceneView().getScene());
                 goal = ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0.0f, -1.0f), goal.getMaterial());
                 Node goalNode = new Node();
@@ -164,7 +166,11 @@ public class MainActivity extends AppCompatActivity {
                                 new SeekBar.OnSeekBarChangeListener() {
                                     @Override
                                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                                        int ratio = progress/3;
+                                        int ratio = progress/1;
+
+                                        lm.setLevel(ratio);
+                                        Log.d("RATIO", "" + lm.getLevelNum());
+                                        genMap(lm.getCurrentLevel());
                                         //change level stuff here;
                                     }
 
@@ -268,12 +274,66 @@ public class MainActivity extends AppCompatActivity {
 
          }
 
+    public synchronized void genMap(Box[] map) {
+        //clean up old map
+        List<Node> nodes = arFragment.getArSceneView().getScene().getChildren();
+
+        for (int i = 0; i < nodes.size(); i++) { //anchornodes
+
+            if (nodes.get(i) instanceof AnchorNode) {
+
+                for (int ii = 0; ii < nodes.get(i).getChildren().size(); ii++) {
+
+                    // ((AnchorNode) nodes.get(i)).detach();
+                   /* if (nodes.get(i).getParent() instanceof AnchorNode) {
+
+                    }*/
+                    if (nodes.get(i).getChildren().get(ii).getRenderable() instanceof ModelRenderable) {
+                        Log.d("FU", "found modelRenderable");
+                        //arFragment.getArSceneView().getScene().removeChild(nodes.get(i).getChildren().get(ii));
+                        arFragment.getArSceneView().getScene().removeChild(nodes.get(i));
+                        arFragment.getArSceneView().getScene().removeChild(goalAnchorNode);
+
+                    }
+
+
+                }
+            }
+        }
+
+
+        //generate the new map
+        spawnSphere(hitRes, sphere);
+        origin = ball.getCenter();
+
+        Anchor wallAnchor = hitRes.createAnchor();
+        AnchorNode wallAnchorNode = new AnchorNode(wallAnchor);
+        wallAnchorNode.setParent(arFragment.getArSceneView().getScene());
+
+        for (int i = 0; i < lm.getCurrentLevel().length; i++) {
+            wall = ShapeFactory.makeCube(lm.getCurrentLevel()[i].getSize(), lm.getCurrentLevel()[i].getCenter(), wall.getMaterial());
+            Node n = new Node();
+            n.setParent(wallAnchorNode);
+            n.setRenderable(wall);
+        }
+
+        Anchor goalAnchor = hitRes.createAnchor();
+        goalAnchorNode = new AnchorNode(goalAnchor);
+        goalAnchorNode.setParent(arFragment.getArSceneView().getScene());
+        goal = ShapeFactory.makeSphere(0.1f, new Vector3(1.0f, 0.0f, -1.55f), goal.getMaterial());
+        Node goalNode = new Node();
+        goalNode.setCollisionShape(modelGoalSphere);
+        goalNode.setParent(goalAnchorNode);
+        goalNode.setRenderable(goal);
+
+    }
+
     public boolean spawnSphere(HitResult hitResult, ModelRenderable sph) {
         Anchor anchor = hitResult.createAnchor();
         AnchorNode anchorNode = new AnchorNode(anchor);
         anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-        BallNode s = new BallNode(arFragment.getTransformationSystem(), modelPlayerSphere, modelGoalSphere, this, map);
+        BallNode s = new BallNode(arFragment.getTransformationSystem(), modelPlayerSphere, modelGoalSphere, this, lm.getCurrentLevel(), arFragment);
         s.setParent(anchorNode);
         s.setRenderable(sph);
         s.select();

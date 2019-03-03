@@ -13,6 +13,7 @@ import com.google.ar.sceneform.collision.Box;
 import com.google.ar.sceneform.collision.CollisionShape;
 import com.google.ar.sceneform.collision.Sphere;
 import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.TransformationSystem;
 
@@ -25,8 +26,9 @@ public class BallNode extends BaseTransformableNode implements Updatable {
     private boolean isWinner = false;
     private Context context;
     private Box[] map;
+    private ArFragment arFragment;
 
-    public BallNode(TransformationSystem transformationSystem, Sphere sphere, Sphere goalSphere, Context context, Box[] map) {
+    public BallNode(TransformationSystem transformationSystem, Sphere sphere, Sphere goalSphere, Context context, Box[] map, ArFragment _arFragment) {
         super(transformationSystem);
         velocityTracker = null;
         this.sphere = sphere;
@@ -34,6 +36,7 @@ public class BallNode extends BaseTransformableNode implements Updatable {
         velocity = new Vector3(0, 0, 0);
         this.context = context;
         this.map = map;
+        this.arFragment = _arFragment;
     }
 
     @Override
@@ -139,7 +142,8 @@ public class BallNode extends BaseTransformableNode implements Updatable {
             }
         }
 
-        Node overlappedNode = getScene().overlapTest(this);
+
+        Node overlappedNode = arFragment.getArSceneView().getScene().overlapTest(this);
         if (overlappedNode != null) {
             CollisionShape collisionShape = overlappedNode.getCollisionShape();
             Log.d("TESTING", "THERE IS A COLLISION");

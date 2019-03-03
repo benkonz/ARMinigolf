@@ -20,6 +20,7 @@
         android:id="@+id/levelSelectBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:max="1"
         android:padding="4dp" />
 
 </LinearLayout>

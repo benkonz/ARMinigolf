@@ -1,5 +1,7 @@
 package com.example.pickhacks;
 
+import android.util.Log;
+
 import com.google.ar.sceneform.collision.Box;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ public class LevelManager
     {
         return (Box[])levels.get(index);
     }
+
     public Box[] getCurrentLevel()
     {
         return currentLevel;
@@ -48,6 +51,18 @@ public class LevelManager
     {
         levels.add(level);
     }
+    public void setLevel(int index)
+    {
+        levelNum = index;
+        Log.d("RATIO", "" + levelNum);
+        currentLevel = (Box[])levels.get(index);
+    }
+    public int getLevelNum()
+    {
+        return levelNum;
+    }
+
+
 
 
 

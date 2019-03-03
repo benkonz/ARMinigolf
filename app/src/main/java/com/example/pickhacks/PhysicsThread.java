@@ -22,6 +22,7 @@ public class PhysicsThread implements Runnable {
             }
             long timeDiff = System.currentTimeMillis() - beginTime;
             int sleepTime = (int) (FRAME_PERIOD - timeDiff);
+            if (sleepTime < 0) sleepTime = 0;
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
