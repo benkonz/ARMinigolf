@@ -24,6 +24,7 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
@@ -49,9 +50,12 @@ public class MainActivity extends AppCompatActivity {
     Box[] map;
     boolean hasLoaded = false;
     List<Updatable> physicsObjects;
-    ViewRenderable menuRenderable;
     Sphere modelPlayerSphere = new Sphere(0.1f, new Vector3(0.0f, 0.0f, 0.0f));
     Sphere modelGoalSphere = new Sphere(0.1f, new Vector3(0.0f, 0.0f, -1.0f));
+    ViewRenderable menuViewRenderable;
+    Renderable menuRenderable;
+    boolean menued = false;
+    Vector3 origin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (!hasLoaded) {
                 spawnSphere(hitResult, sphere);
+                origin = ball.getCenter();
 
                 Anchor wallAnchor = hitResult.createAnchor();
                 AnchorNode wallAnchorNode = new AnchorNode(wallAnchor);
@@ -147,47 +152,80 @@ public class MainActivity extends AppCompatActivity {
                 goalNode.setParent(goalAnchorNode);
                 goalNode.setRenderable(goal);
 
+
                 CompletableFuture<ViewRenderable> menuStage = ViewRenderable.builder().setView(this, R.layout.menu_layout).build();
-                CompletableFuture.allOf(menuStage).handle((notUsed, throwable) -> {
-                    if (throwable != null) {
-                        return null; //unable to load the menu
-                    }
-
+                menuStage.handle((notUsed, throwable) -> {
                     try {
-                        menuRenderable = menuStage.get();
-                    }
-                    catch(InterruptedException | ExecutionException ex) {
-                        Log.d("MENU", "Unable to load menu" + ex + "menuStage: " + menuStage + "menuRenderable:" + menuRenderable);
-                    }
+                        Log.d("MENU", "tring to get menu view renderable");
+                        menuViewRenderable = menuStage.get();
 
+                        Anchor menuAnchor = hitResult.createAnchor();
+                        AnchorNode menuAnchorNode = new AnchorNode(menuAnchor);
+                        menuAnchorNode.setParent(arFragment.getArSceneView().getScene());
+                        Node menuNode = new Node();
+                        menuNode.setParent(menuAnchorNode);
+                        menuNode.setRenderable(menuViewRenderable);
+                        menuNode.setLocalPosition(new Vector3(0.0f, 1.0f, 0.0f));
+
+                        View menuView = menuViewRenderable.getView();
+                        SeekBar levelSelectBar = menuView.findViewById(R.id.levelSelectBar);
+                        //levelSelectBar.setProgress(0);
+                        levelSelectBar.setOnSeekBarChangeListener(
+                                new SeekBar.OnSeekBarChangeListener() {
+                                    @Override
+                                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                                        int ratio = progress/3;
+                                        //change level stuff here;
+                                    }
+
+                                    @Override
+                                    public void onStartTrackingTouch(SeekBar seekBar) {
+
+                                    }
+
+                                    @Override
+                                    public void onStopTrackingTouch(SeekBar seekBar) {
+
+                                    }
+
+                                }
+                        );
+
+                        menued = true;
+                    }
+                    catch(InterruptedException | ExecutionException e) {
+                        Log.d("MENU", "got an exception, menuStage: " + menuStage + "menuViewRenderable: " + menuViewRenderable);
+                    }
                     return null;
                 });
-
-                /**View menuView = menuRenderable.getView();
-                SeekBar levelSelectBar = menuView.findViewById(R.id.levelSelectBar);
-                levelSelectBar.setProgress(0);
-                levelSelectBar.setOnSeekBarChangeListener(
-                        new SeekBar.OnSeekBarChangeListener() {
-                            @Override
-                            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                                float ratio = (float) progress / (float) levelSelectBar.getMax();
-                                //add actually switching to a level here
-                            }
-
-                            @Override
-                            public void onStartTrackingTouch(SeekBar seekBar) {
-                                //examples showed empty method here, but maybe i can figure out what do with it
-                            }
-
-                            @Override
-                            public void onStopTrackingTouch(SeekBar seekBar) {
-
-                            }
-                        });*/
+                Log.d("MENU", "menuViewRenderable:" + menuViewRenderable);
 
                 hasLoaded = true;
             }
 
+            if(!menued) {
+                CompletableFuture<ViewRenderable> menuStage = ViewRenderable.builder().setView(this, R.layout.menu_layout).build();
+                menuStage.handle((notUsed, throwable) -> {
+                    try {
+                        Log.d("MENU", "string to get menu view renderable");
+                        menuViewRenderable = menuStage.get();
+
+                        Anchor menuAnchor = hitResult.createAnchor();
+                        AnchorNode menuAnchorNode = new AnchorNode(menuAnchor);
+                        menuAnchorNode.setParent(arFragment.getArSceneView().getScene());
+                        Node menuNode = new Node();
+                        menuNode.setParent(menuAnchorNode);
+                        menuNode.setRenderable(menuViewRenderable);
+                        menuNode.setLocalPosition(new Vector3(0.0f, 1.0f, 0.0f));
+
+                        menued = true;
+                    }
+                    catch(InterruptedException | ExecutionException e) {
+                        Log.d("MENU", "got an exception, menuStage: " + menuStage + "menuViewRenderable: " + menuViewRenderable);
+                    }
+                    return null;
+                });
+            }
 
             Runnable runnable = new PhysicsThread(physicsObjects);
             ExecutorService executorService = Executors.newFixedThreadPool(1);
