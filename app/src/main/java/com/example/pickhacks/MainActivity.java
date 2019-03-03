@@ -19,6 +19,7 @@ import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.collision.Box;
+import com.google.ar.sceneform.collision.Sphere;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.MaterialFactory;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static final double MIN_OPENGL_VERSION = 3.0;
     ArFragment arFragment;
     ModelRenderable sphere;
+    Sphere ball;
     ModelRenderable wall;
     Box[] map;
     boolean hasLoaded = false;
@@ -77,11 +79,15 @@ public class MainActivity extends AppCompatActivity {
         map[2].setSize(new Vector3(1f, 0.15f, 0.2f));
         map[2].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
 
+        ball = new Sphere();
+        ball.setRadius(0.1f);
+        ball.setCenter(new Vector3(0.0f, 0f, 0.0f));
+
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.WHITE))
                 .thenAccept(
                         material -> {
                             sphere =
-                                    ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0f, 0.0f), material);
+                                    ShapeFactory.makeSphere(ball.getRadius(), ball.getCenter(), material);
                         }).exceptionally(throwable -> {
             Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER, 0, 0);
