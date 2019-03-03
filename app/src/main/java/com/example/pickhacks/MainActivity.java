@@ -46,7 +46,9 @@ public class MainActivity extends AppCompatActivity {
     Sphere ball;
     ModelRenderable wall;
     ModelRenderable goal;
-    Box[] map;
+   LevelManager lm;
+   Box[] level1;
+   Box[] level2;
     boolean hasLoaded = false;
     List<Updatable> physicsObjects;
     ViewRenderable menuRenderable;
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         if (!checkIsSupportedDeviceOrFinish(this)) {
             return;
         }
+        lm = new LevelManager();
 
         setContentView(R.layout.activity_main);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
@@ -68,20 +71,7 @@ public class MainActivity extends AppCompatActivity {
         physicsObjects = new ArrayList<>();
 
 
-        //initialize and create boxes on the map
-        map = new Box[3];
-        map[0] = new Box();
-        map[0].setSize(new Vector3(0.2f, 0.15f, 1.2f));
-        map[0].setCenter(new Vector3(-0.4f, 0.0f, -0.6f));
-
-        map[1] = new Box();
-        map[1].setSize(new Vector3(0.2f, 0.15f, 1.2f));
-        map[1].setCenter(new Vector3(0.4f, 0.0f, -0.6f));
-
-        map[2] = new Box();
-        map[2].setSize(new Vector3(1f, 0.15f, 0.2f));
-        map[2].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
-
+       createMap();
         ball = new Sphere();
         ball.setRadius(0.1f);
         ball.setCenter(new Vector3(0.0f, 0f, 0.0f));
@@ -110,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 .thenAccept(
                         material -> {
                             wall =
-                                    ShapeFactory.makeCube(map[0].getSize(), map[0].getCenter(), material);
+                                    ShapeFactory.makeCube(lm.getCurrentLevel()[0].getSize(), lm.getCurrentLevel()[0].getCenter(), material);
                         }).exceptionally(throwable -> {
             Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER, 0, 0);
@@ -131,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
                 AnchorNode wallAnchorNode = new AnchorNode(wallAnchor);
                 wallAnchorNode.setParent(arFragment.getArSceneView().getScene());
 
-                for (int i = 0; i < map.length; i++) {
-                    wall = ShapeFactory.makeCube(map[i].getSize(), map[i].getCenter(), wall.getMaterial());
+                for (int i = 0; i < lm.getCurrentLevel().length; i++) {
+                    wall = ShapeFactory.makeCube(lm.getCurrentLevel()[i].getSize(), lm.getCurrentLevel()[i].getCenter(), wall.getMaterial());
                     Node n = new Node();
                     n.setParent(wallAnchorNode);
                     n.setRenderable(wall);
@@ -194,6 +184,51 @@ public class MainActivity extends AppCompatActivity {
             executorService.execute(runnable);
         });
     }
+
+          public void createMap()
+         {
+             //Level 1
+             level1 = new Box[3];
+             level1[0] = new Box();
+             level1[0].setSize(new Vector3(0.2f, 0.15f, 1.2f));
+             level1[0].setCenter(new Vector3(-0.4f, 0.0f, -0.6f));
+
+             level1[1] = new Box();
+             level1[1].setSize(new Vector3(0.2f, 0.15f, 1.2f));
+             level1[1].setCenter(new Vector3(0.4f, 0.0f, -0.6f));
+
+             level1[2] = new Box();
+             level1[2].setSize(new Vector3(1f, 0.15f, 0.2f));
+             level1[2].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
+             lm.addLevel(level1);
+
+             //Level 2
+             level2 = new Box[5];
+             level2[0] = new Box();
+             level2[0].setSize(new Vector3(0.2f, 0.15f, 2f));
+             level2[0].setCenter(new Vector3(-0.4f, 0.0f, -1f));
+
+             level2[1] = new Box();
+             level2[1].setSize(new Vector3(0.2f, 0.15f, 1.2f));
+             level2[1].setCenter(new Vector3(0.4f, 0.0f, -0.6f));
+
+             level2[2] = new Box();
+             level2[2].setSize(new Vector3(2f, 0.15f, 0.2f));
+             level2[2].setCenter(new Vector3(0.5f, 0.0f, -2f));
+
+             level2[3] = new Box();
+             level2[3].setSize(new Vector3(1f, 0.15f, 0.2f));
+             level2[3].setCenter(new Vector3(1.0f, 0.0f, -1.1f));
+
+             level2[4] = new Box();
+             level2[4].setSize(new Vector3(0.2f, 0.15f, 1.05f));
+             level2[4].setCenter(new Vector3(1.6f, 0.0f, -1.55f));
+             lm.addLevel(level2);
+             lm.IncreaseLevel();
+             //lm.IncreaseLevel();
+             // I will win
+
+         }
 
     public boolean spawnSphere(HitResult hitResult, ModelRenderable sph) {
         Anchor anchor = hitResult.createAnchor();
