@@ -226,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
              lm.addLevel(level2);
              lm.IncreaseLevel();
              //lm.IncreaseLevel();
+             // I will win
 
          }
 
