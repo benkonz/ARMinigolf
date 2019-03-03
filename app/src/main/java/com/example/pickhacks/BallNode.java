@@ -92,6 +92,10 @@ public class BallNode extends BaseTransformableNode implements Updatable {
     public void update() {
         Vector3 position = getWorldPosition();
 
+        if (collidesWithSphere(goalSphere)) {
+            isWinner = true;
+        }
+
         Node overlappedNode = getScene().overlapTest(this);
         if (overlappedNode != null) {
             CollisionShape collisionShape = overlappedNode.getCollisionShape();
@@ -116,9 +120,6 @@ public class BallNode extends BaseTransformableNode implements Updatable {
                     velocity.y *= -1;
                 }
             }
-        }
-        if (collidesWithSphere(goalSphere)) {
-            isWinner = true;
         }
 
         Vector3 newPosition = new Vector3(position.x + velocity.x, position.y, position.z + velocity.y);
