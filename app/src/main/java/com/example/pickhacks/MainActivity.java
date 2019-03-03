@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.google.ar.core.Anchor;
@@ -22,10 +24,13 @@ import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
     ModelRenderable sphere;
     ModelRenderable wall;
     Box[] map;
-    boolean hasSpawnedBall = false;
+    boolean hasLoaded = false;
     List<Updatable> physicsObjects;
+    ViewRenderable menuRenderable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,21 +63,19 @@ public class MainActivity extends AppCompatActivity {
         physicsObjects = new ArrayList<>();
 
 
-        map = new Box[61];
-        for (int i = 0; i < 30; i++) {
-            map[i] = new Box();
-            map[i].setSize(new Vector3(0.2f, 0.15f, 0.2f));
-            map[i].setCenter(new Vector3(-0.4f, 0.0f, -0.04f * i));
-        }
-        for (int i = 30; i < 60; i++) {
-            map[i] = new Box();
-            map[i].setSize(new Vector3(0.2f, 0.15f, 0.2f));
-            map[i].setCenter(new Vector3(0.4f, 0.0f, -0.04f * (i % (map.length / 2))));
-        }
-        map[60] = new Box();
-        map[60].setSize(new Vector3(1f, 0.15f, 0.2f));
-        map[60].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
+        //initialize and create boxes on the map
+        map = new Box[3];
+        map[0] = new Box();
+        map[0].setSize(new Vector3(0.2f, 0.15f, 1.2f));
+        map[0].setCenter(new Vector3(-0.4f, 0.0f, -0.6f));
 
+        map[1] = new Box();
+        map[1].setSize(new Vector3(0.2f, 0.15f, 1.2f));
+        map[1].setCenter(new Vector3(0.4f, 0.0f, -0.6f));
+
+        map[2] = new Box();
+        map[2].setSize(new Vector3(1f, 0.15f, 0.2f));
+        map[2].setCenter(new Vector3(0.0f, 0.0f, -1.2f));
 
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.WHITE))
                 .thenAccept(
@@ -103,8 +107,7 @@ public class MainActivity extends AppCompatActivity {
             if (sphere == null) {
                 return;
             }
-            Log.d("TEST", "Sphere: " + sphere + "; hasSpawn: " + hasSpawnedBall);
-            if (!hasSpawnedBall) {
+            if (!hasLoaded) {
                 spawnSphere(hitResult, sphere);
 
                 Anchor wallAnchor = hitResult.createAnchor();
@@ -112,25 +115,54 @@ public class MainActivity extends AppCompatActivity {
                 wallAnchorNode.setParent(arFragment.getArSceneView().getScene());
 
                 for (int i = 0; i < map.length; i++) {
-                    final int pos = i;
-                    MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.BLACK))
-                            .thenAccept(
-                                    material -> {
-                                        wall =
-                                                ShapeFactory.makeCube(map[pos].getSize(), map[pos].getCenter(), material);
-                                    }).exceptionally(throwable -> {
-                        Toast toast = Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        toast.show();
-                        return null;
-                    });
+                    wall = ShapeFactory.makeCube(map[i].getSize(), map[i].getCenter(), wall.getMaterial());
 
                     Node n = new Node();
                     n.setParent(wallAnchorNode);
                     n.setRenderable(wall);
                 }
-                hasSpawnedBall = true;
+
+                CompletableFuture<ViewRenderable> menuStage = ViewRenderable.builder().setView(this, R.layout.menu_layout).build();
+                CompletableFuture.allOf(menuStage).handle((notUsed, throwable) -> {
+                    if (throwable != null) {
+                        return null; //unable to load the menu
+                    }
+
+                    try {
+                        menuRenderable = menuStage.get();
+                    }
+                    catch(InterruptedException | ExecutionException ex) {
+                        Log.d("MENU", "Unable to load menu" + ex + "menuStage: " + menuStage + "menuRenderable:" + menuRenderable);
+                    }
+
+                    return null;
+                });
+
+                /**View menuView = menuRenderable.getView();
+                SeekBar levelSelectBar = menuView.findViewById(R.id.levelSelectBar);
+                levelSelectBar.setProgress(0);
+                levelSelectBar.setOnSeekBarChangeListener(
+                        new SeekBar.OnSeekBarChangeListener() {
+                            @Override
+                            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                                float ratio = (float) progress / (float) levelSelectBar.getMax();
+                                //add actually switching to a level here
+                            }
+
+                            @Override
+                            public void onStartTrackingTouch(SeekBar seekBar) {
+                                //examples showed empty method here, but maybe i can figure out what do with it
+                            }
+
+                            @Override
+                            public void onStopTrackingTouch(SeekBar seekBar) {
+
+                            }
+                        });*/
+
+                hasLoaded = true;
             }
+
 
             Runnable runnable = new PhysicsThread(physicsObjects);
             ExecutorService executorService = Executors.newFixedThreadPool(1);
