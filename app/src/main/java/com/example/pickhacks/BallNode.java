@@ -24,14 +24,16 @@ public class BallNode extends BaseTransformableNode implements Updatable {
     private Sphere goalSphere;
     private boolean isWinner = false;
     private Context context;
+    private Box[] map;
 
-    public BallNode(TransformationSystem transformationSystem, Sphere sphere, Sphere goalSphere, Context context) {
+    public BallNode(TransformationSystem transformationSystem, Sphere sphere, Sphere goalSphere, Context context, Box[] map) {
         super(transformationSystem);
         velocityTracker = null;
         this.sphere = sphere;
         this.goalSphere = goalSphere;
         velocity = new Vector3(0, 0, 0);
         this.context = context;
+        this.map = map;
     }
 
     @Override
@@ -88,9 +90,54 @@ public class BallNode extends BaseTransformableNode implements Updatable {
         }
     }
 
+    public boolean sphereCollidesWithBox(Sphere sphere, Box box) {
+        float circularDistanceX = Math.abs(sphere.getCenter().x - box.getCenter().x);
+        float circularDistanceY = Math.abs(sphere.getCenter().y - box.getCenter().y);
+        float circularDistanceZ = Math.abs(sphere.getCenter().z - box.getCenter().z);
+
+        if (circularDistanceX > box.getSize().x / 2 + sphere.getRadius()) return false;
+        if (circularDistanceY > box.getSize().y / 2 + sphere.getRadius()) return false;
+        if (circularDistanceZ > box.getSize().z / 2 + sphere.getRadius()) return false;
+
+        if (circularDistanceX <= (box.getSize().x / 2)) return true;
+        if (circularDistanceY <= (box.getSize().y / 2)) return true;
+        if (circularDistanceZ <= (box.getSize().z / 2)) return true;
+
+        float cornerDistnace_sq = (circularDistanceX - box.getSize().x / 2) * (circularDistanceX - box.getSize().x / 2) +
+                (circularDistanceY - box.getSize().y / 2) * (circularDistanceY - box.getSize().y / 2) +
+                (circularDistanceZ - box.getSize().z / 2) * (circularDistanceZ - box.getSize().z / 2);
+
+        return (cornerDistnace_sq <= (sphere.getRadius() * sphere.getRadius()));
+    }
+
     @Override
     public void update() {
         Vector3 position = getWorldPosition();
+
+        if (collidesWithSphere(goalSphere)) {
+            isWinner = true;
+        }
+
+        for (Box box : map) {
+            float circularDistanceX = Math.abs(sphere.getCenter().x - box.getCenter().x);
+            float circularDistanceY = Math.abs(sphere.getCenter().y - box.getCenter().y);
+            float circularDistanceZ = Math.abs(sphere.getCenter().z - box.getCenter().z);
+
+            float cornerDistnace_sq = (circularDistanceX - box.getSize().x / 2) * (circularDistanceX - box.getSize().x / 2) +
+                    (circularDistanceY - box.getSize().y / 2) * (circularDistanceY - box.getSize().y / 2) +
+                    (circularDistanceZ - box.getSize().z / 2) * (circularDistanceZ - box.getSize().z / 2);
+
+            if (sphereCollidesWithBox(sphere, box)) {
+                if ((circularDistanceX <= (box.getSize().x / 2))) {
+                    velocity.x *= -1;
+                } else if (circularDistanceZ > box.getSize().z / 2 + sphere.getRadius()) {
+                    velocity.y *= -1;
+                } else if (cornerDistnace_sq <= (sphere.getRadius() * sphere.getRadius())) {
+                    velocity.x *= -1;
+                    velocity.y *= -1;
+                }
+            }
+        }
 
         Node overlappedNode = getScene().overlapTest(this);
         if (overlappedNode != null) {
@@ -116,9 +163,6 @@ public class BallNode extends BaseTransformableNode implements Updatable {
                     velocity.y *= -1;
                 }
             }
-        }
-        if (collidesWithSphere(goalSphere)) {
-            isWinner = true;
         }
 
         Vector3 newPosition = new Vector3(position.x + velocity.x, position.y, position.z + velocity.y);
