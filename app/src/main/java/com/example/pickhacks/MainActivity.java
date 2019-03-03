@@ -19,6 +19,7 @@ import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.collision.Box;
+import com.google.ar.sceneform.collision.Sphere;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.MaterialFactory;
@@ -43,10 +44,13 @@ public class MainActivity extends AppCompatActivity {
     ArFragment arFragment;
     ModelRenderable sphere;
     ModelRenderable wall;
+    ModelRenderable goal;
     Box[] map;
     boolean hasLoaded = false;
     List<Updatable> physicsObjects;
     ViewRenderable menuRenderable;
+    Sphere modelPlayerSphere = new Sphere(0.1f, new Vector3(0.0f, 0.0f, 0.0f));
+    Sphere modelGoalSphere = new Sphere(0.1f, new Vector3(0.0f, 0.0f, -1.0f));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +93,14 @@ public class MainActivity extends AppCompatActivity {
             return null;
         });
 
+        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.RED))
+                .thenAccept(material -> {
+                    goal = ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0f, -1.0f), material);
+                }).exceptionally(throwable -> {
+            Toast.makeText(this, "Unable draw Shape", Toast.LENGTH_SHORT).show();
+            return null;
+        });
+
         MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.BLACK))
                 .thenAccept(
                         material -> {
@@ -116,11 +128,18 @@ public class MainActivity extends AppCompatActivity {
 
                 for (int i = 0; i < map.length; i++) {
                     wall = ShapeFactory.makeCube(map[i].getSize(), map[i].getCenter(), wall.getMaterial());
-
                     Node n = new Node();
                     n.setParent(wallAnchorNode);
                     n.setRenderable(wall);
                 }
+
+                Anchor goalAnchor = hitResult.createAnchor();
+                AnchorNode goalAnchorNode = new AnchorNode(goalAnchor);
+                goalAnchorNode.setParent(arFragment.getArSceneView().getScene());
+                goal = ShapeFactory.makeSphere(0.1f, new Vector3(0.0f, 0.0f, -1.0f), goal.getMaterial());
+                Node goalNode = new Node();
+                goalNode.setParent(goalAnchorNode);
+                goalNode.setRenderable(goal);
 
                 CompletableFuture<ViewRenderable> menuStage = ViewRenderable.builder().setView(this, R.layout.menu_layout).build();
                 CompletableFuture.allOf(menuStage).handle((notUsed, throwable) -> {
@@ -175,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
         AnchorNode anchorNode = new AnchorNode(anchor);
         anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-        BallNode s = new BallNode(this, arFragment.getTransformationSystem());
+        BallNode s = new BallNode(arFragment.getTransformationSystem(), modelPlayerSphere, modelGoalSphere, this);
         s.setParent(anchorNode);
         s.setRenderable(sph);
         s.select();

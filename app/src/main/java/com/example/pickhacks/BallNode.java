@@ -5,24 +5,29 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.widget.Toast;
 
+import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.HitTestResult;
+import com.google.ar.sceneform.collision.Sphere;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.TransformationSystem;
 
 public class BallNode extends BaseTransformableNode implements Updatable {
 
-
     private VelocityTracker velocityTracker;
-    private Context context;
     private Vector3 velocity;
-    private float gravity;
+    private Sphere sphere;
+    private Sphere goalSphere;
+    private boolean isWinner = false;
+    private Context context;
 
-    public BallNode(Context context, TransformationSystem transformationSystem) {
+    public BallNode(TransformationSystem transformationSystem, Sphere sphere, Sphere goalSphere, Context context) {
         super(transformationSystem);
         velocityTracker = null;
-        this.context = context;
+        this.sphere = sphere;
+        this.goalSphere = goalSphere;
         velocity = new Vector3(0, 0, 0);
+        this.context = context;
     }
 
     @Override
@@ -42,12 +47,10 @@ public class BallNode extends BaseTransformableNode implements Updatable {
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
-                Toast.makeText(context, "You moved the ball!", Toast.LENGTH_SHORT).show();
                 velocityTracker.addMovement(motionEvent);
                 velocityTracker.computeCurrentVelocity(1);
                 velocity.x = velocityTracker.getXVelocity(pointerId) / 1000;
                 velocity.y = velocityTracker.getYVelocity(pointerId) / 1000;
-                Toast.makeText(context, "x: " + velocity.x + " y: " + velocity.y, Toast.LENGTH_SHORT).show();
                 break;
             }
             case MotionEvent.ACTION_UP:
@@ -59,12 +62,39 @@ public class BallNode extends BaseTransformableNode implements Updatable {
         return true;
     }
 
+    boolean collidesWithSphere(Sphere sphere) {
+        float deltaXSquared = Math.abs(sphere.getCenter().x) - Math.abs(this.sphere.getCenter().x);
+        deltaXSquared *= deltaXSquared;
+        float deltaYSquared = Math.abs(sphere.getCenter().y) - Math.abs(this.sphere.getCenter().y);
+        deltaYSquared *= deltaYSquared;
+        float deltaZSquared = Math.abs(sphere.getCenter().z) - Math.abs(this.sphere.getCenter().z);
+        deltaZSquared *= deltaZSquared;
+
+        float sumRadiiSquared = sphere.getRadius() + this.sphere.getRadius();
+        sumRadiiSquared *= sumRadiiSquared;
+
+        return deltaXSquared + deltaYSquared + deltaZSquared <= sumRadiiSquared;
+    }
+
+    @Override
+    public void onUpdate(FrameTime frameTime) {
+        if (isWinner) {
+            Toast.makeText(context, "YOU ARE A WINNER", Toast.LENGTH_SHORT).show();
+            isWinner = false;
+        }
+    }
+
     @Override
     public void update() {
         Vector3 position = getWorldPosition();
+        if (collidesWithSphere(goalSphere)) {
+            isWinner = true;
+        }
+
         Vector3 newPosition = new Vector3(position.x + velocity.x, position.y, position.z + velocity.y);
         velocity.x *= .99;
         velocity.y *= .99;
+        sphere.setCenter(new Vector3(sphere.getCenter().x + velocity.x, sphere.getCenter().y, sphere.getCenter().z + velocity.y));
         setWorldPosition(newPosition);
     }
 }
